@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salon Booking Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+:root {
+    --primary: #8a6d3b;
+    --secondary: #d4b996;
+    --success: #28a745;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+}
+body {
+    background-color: #f5f5f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.navbar { background-color: var(--primary); }
+.navbar-brand, .nav-link { color: white; font-weight: bold; }
+.nav-link.active { text-decoration: underline; }
+.booking-list { max-height: 600px; overflow-y: auto; }
+.booking-item { cursor: pointer; border-radius: 10px; padding: 15px; margin-bottom: 10px; background-color: white; transition: all 0.3s; }
+.booking-item:hover { background-color: var(--secondary); color: white; }
+.booking-item.active { background-color: var(--primary); color: white; }
+.booking-card { border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background-color: white; }
+.page-title { color: var(--primary); font-weight: 700; margin-bottom: 25px; }
+.service-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
+.service-item:last-child { border-bottom: none; }
+.service-icon { width: 40px; height: 40px; border-radius: 50%; background-color: #f0e5d6; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-right: 10px; }
+.detail-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.detail-item:last-child { border-bottom: none; }
+
+@media(max-width: 992px) {
+    .booking-list { max-height: 300px; margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<%- include('header') %>
+
+<!-- Main Content -->
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <h2 class="page-title">My Bookings</h2>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Left: Latest Bookings -->
+        <div class="col-lg-4">
+            <div class="booking-list">
+                <!-- Booking items will be injected here -->
+            </div>
+        </div>
+
+        <!-- Right: Booking Details -->
+        <div class="col-lg-8">
+            <div id="bookingDetails" class="booking-card p-4">
+                <h5>Booking Details</h5>
+                <p>Select a booking from the left to see details.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+const bookingItemsContainer = document.querySelector('.booking-list');
+const bookingDetails = document.getElementById('bookingDetails');
+
+let bookings = [];
+const customerId = 1; // example, replace with dynamic user ID
+
+// Fetch bookings from backend
+axios.get(`/booking/bookingdetails/${customerId}`)
+    .then(response => {
+        if(response.data.success){
+            bookings = response.data.data;
+            console.log(bookings);
+            
+            renderBookingList();
+            if(bookings.length > 0){
+                showBookingDetails(bookings[0].booking_id);
+            }
+        }
+    })
+    .catch(error => console.error(error));
+
+// Render booking list
+function renderBookingList() {
+    bookingItemsContainer.innerHTML = '';
+    const uniqueBookings = [...new Map(bookings.map(item => [item.booking_id, item])).values()];
+    console.log("unique",uniqueBookings);
+    
+    uniqueBookings.forEach((booking, index) => {
+        const div = document.createElement('div');
+        div.className = 'booking-item' + (index === 0 ? ' active' : '');
+        div.dataset.bookingId = booking.booking_id;
+        div.innerHTML = `
+            <h6>Booking #${booking.booking_id}</h6>
+            <small>${new Date(booking.booking_date).toLocaleDateString()}, ${booking.services[0].start_time} - ${booking.services[0].end_time}</small>
+            <span class="badge bg-${booking.booking_status === 'pending' ? 'warning' : (booking.booking_status === 'cancelled' ? 'danger' : 'success')} float-end">${booking.booking_status}</span>
+        `;
+        div.addEventListener('click', () => {
+            document.querySelectorAll('.booking-item').forEach(i => i.classList.remove('active'));
+            div.classList.add('active');
+            showBookingDetails(booking.booking_id);
+        });
+        bookingItemsContainer.appendChild(div);
+    });
+}
+
+// Show booking details
+// Show booking details
+function showBookingDetails(id) {
+    const booking = bookings.find(b => b.booking_id === id);
+    if(!booking) return;
+
+    let html = `<h5>Booking #${id} Details</h5>`;
+
+    booking.services.forEach(s => {
+        let icon = 'fa-cut';
+        if(s.service_name.toLowerCase().includes('spa')) icon = 'fa-spa';
+        else if(s.service_name.toLowerCase().includes('face')) icon = 'fa-face-smile';
+
+        html += `
+        <div class="service-item">
+            <div class="d-flex align-items-center">
+                <div class="service-icon"><i class="fas ${icon}"></i></div>
+                <div>${s.service_name}</div>
+            </div>
+            <div>₹${s.service_amount} <small>${s.start_time} - ${s.end_time}</small></div>
+        </div>`;
+    });
+
+    const paymentBadge = booking.payment_status === 'paid' ? 'success' : 'warning';
+    let bookingBadge = 'warning';
+    if(booking.booking_status === 'completed') bookingBadge = 'success';
+    else if(booking.booking_status === 'cancelled') bookingBadge = 'danger';
+
+    html += `<hr>
+        <div class="detail-item"><span class="detail-label">Date & Time</span><span>${new Date(booking.booking_date).toLocaleDateString()}</span></div>
+        <div class="detail-item"><span class="detail-label">Total Amount</span><span>₹${booking.total_amount}</span></div>
+        <div class="detail-item"><span class="detail-label">Payment Status</span><span class="badge bg-${paymentBadge}">${booking.payment_status}</span></div>
+        <div class="detail-item"><span class="detail-label">Booking Status</span><span class="badge bg-${bookingBadge}">${booking.booking_status}</span></div>
+        <div class="mt-3 text-end">
+    ${booking.booking_status === 'pending' || booking.booking_status === 'confirmed'  
+        ? `<a href="/booking/detailsbyid/${id}" class="btn btn-primary btn-sm">More Details</a>` 
+        : ''}
+</div>`;
+
+    bookingDetails.innerHTML = html;
+}
+
+
+// Cancel booking
+function cancelBooking(id) {
+    if(!confirm('Are you sure you want to cancel this booking?')) return;
+    axios.post(`/booking/cancel/${id}`)
+        .then(res => {
+            alert(res.data.message);
+            bookings = bookings.map(b => b.booking_id === id ? {...b, booking_status: 'cancelled'} : b);
+            renderBookingList();
+            showBookingDetails(id);
+        })
+        .catch(err => console.error(err));
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

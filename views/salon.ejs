@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glamour Salon - Book Your Appointment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #d63384;
+      --secondary-color: #6f42c1;
+    }
+    body { background-color: #f9f7fe; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .salon-card { border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.3s; }
+    .salon-card:hover { transform: translateY(-5px); }
+    .salon-info { padding:20px; }
+    .salon-name { font-weight:700; margin-bottom:5px; }
+    .section-title { font-weight:600; margin-bottom:15px; color: #212529; border-bottom:1px solid #eee; padding-bottom:8px; }
+    .booking-sections { display: flex; flex-wrap: wrap; gap: 20px; }
+    .booking-sections > div { flex: 1 1 45%; }
+    .time-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .time-slot { background-color:white; border:1px solid #ddd; border-radius:8px; padding:10px 5px; text-align:center; cursor:pointer; transition: all 0.2s; font-size:0.9rem; }
+    .time-slot:hover { background-color:#f0f0f0; }
+    .time-slot.selected { background-color: var(--primary-color); color:white; border-color: var(--primary-color); }
+    .features-list { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    .feature-item { background-color:white; border:1px solid #ddd; border-radius:20px; padding:8px 15px; font-size:0.9rem; cursor:pointer; transition: all 0.2s; }
+    .feature-item:hover { background-color:#f8f9fa; }
+    .feature-item.selected { background-color: var(--secondary-color); color:white; border-color: var(--secondary-color); }
+    .book-btn { background-color: var(--primary-color); border:none; border-radius:8px; padding:12px 0; font-weight:600; width:100%; transition: all 0.3s; }
+    .book-btn:hover { background-color:#c22570; transform: translateY(-2px); }
+    .booking-summary { background-color: #f8f9fa; border-radius:10px; padding:15px; margin-top:20px; }
+    .summary-item { display:flex; justify-content:space-between; margin-bottom:8px; }
+    .summary-total { font-weight:600; font-size:1.1rem; border-top:1px solid #ddd; padding-top:10px; margin-top:10px; }
+    @media(max-width:768px){ .booking-sections { flex-direction: column; } .booking-sections > div { flex: 1 1 100%; } }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="">
+      <div class="salon-card bg-white">
+        <div class="ratio" style="--bs-aspect-ratio: 40%;">
+          <img id="salon-image" src="..." alt="Salon Image" class="img-fluid rounded-top">
+        </div>
+        <div class="salon-info">
+          <h1 class="salon-name"></h1>
+          <p class="text-muted mb-4">Experience luxury and style at Glamour Salon. Our expert stylists are dedicated to making you look and feel your best with personalized services.</p>
+
+          <div class="mb-3">
+            <label for="booking-date" class="form-label fw-bold">Select Date</label>
+            <input type="date" id="booking-date" class="form-control" min="">
+          </div>
+
+          <div class="booking-sections">
+            <div>
+              <h4 class="section-title">Select Services</h4>
+              <div class="features-list" id="features"></div>
+            </div>
+            <div>
+              <h4 class="section-title">Select Time Slot</h4>
+              <div class="time-slots" id="time-slots"></div>
+            </div>
+          </div>
+
+          <div class="booking-summary">
+            <h5 class="mb-3">Booking Summary</h5>
+            <div class="summary-item"><span>Selected Date:</span><span id="selected-date-display">Not selected</span></div>
+            <div class="summary-item"><span>Selected Time:</span><span id="selected-time-display">Not selected</span></div>
+            <div class="summary-item"><span>Selected Services:</span><span id="selected-services-display">None</span></div>
+            <div class="summary-item"><span>Duration:</span><span id="duration-display">0 min</span></div>
+            <div class="summary-item summary-total"><span>Total:</span><span id="total-price">₹0</span></div>
+          </div>
+
+          <div class="mt-3 mb-3">
+            <input type="radio" name="payment-method" id="pay-on-shop">
+            <label for="pay-on-shop">Pay at Salon</label>
+            <input type="radio" name="payment-method" id="pay-now" checked>
+            <label for="pay-now">Pay Now</label>
+          </div>
+
+          <div class="mt-3">
+            <input type="text" id="customer-name" class="form-control mb-2" placeholder="Enter your Name" required>
+            <input type="text" id="customer-phone" class="form-control mb-2" placeholder="Enter your Phone Number" required>
+            <input type="email" id="customer-email" class="form-control mb-2" placeholder="Enter your Email" required>
+          </div>
+
+          <button id="book-btn" class="btn book-btn text-white mt-4" disabled>Book Appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+let selectedTime = null;
+let selectedFeatures = [];
+let slots_by_service = [];
+let salonInfo = {};
+let selectedDate = null;
+
+// DOM references
+const selectedTimeDisplay = document.getElementById("selected-time-display");
+const selectedServicesDisplay = document.getElementById("selected-services-display");
+const durationDisplay = document.getElementById("duration-display");
+const totalPriceDisplay = document.getElementById("total-price");
+const bookBtn = document.getElementById("book-btn");
+const bookingDateInput = document.getElementById("booking-date");
+const selectedDateDisplay = document.getElementById("selected-date-display");
+
+// Set min date to today
+bookingDateInput.min = new Date().toISOString().split("T")[0];
+
+// Fetch salon details
+async function fetchSalon(date=null) {
+  try {
+    const salonId = window.location.pathname.split('/').pop();
+    const url = date ? `/salon/salon-details/${salonId}?date=${date}` : `/salon/salon-details/${salonId}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    salonInfo = { id: data.salon.salon_id || salonId, name: data.salon.name || "Glamour Salon" };
+
+    // Update DOM
+    const salonImage = document.getElementById("salon-image");
+    salonImage.src = data.salon.image ? `http://localhost:2255/uploads/${data.salon.image}` : 'https://content3.jdmagicbox.com/v2/comp/ahmedabad/v6/079pxx79.xx79.230129145510.y5v6/catalogue/shades-of-blackk-spalon-thaltej-ahmedabad-beauty-parlours-h0hbyim8ww.jpg';
+    salonImage.alt = salonInfo.name;
+    document.querySelector(".salon-name").textContent = salonInfo.name;
+
+    // Update slots and services
+    slots_by_service = data.slots_by_service || [];
+    renderFeatures(data.services || []);
+    
+    // Refresh slots for selected services if date changes
+    selectedFeatures.forEach(f => renderSlotsByService(f.service_id));
+    updateBookingSummary();
+  } catch (err) {
+    console.error("Error fetching salon details:", err);
+    alert("Failed to load salon details.");
+  }
+}
+
+// Render services
+function renderFeatures(services){
+  const container = document.getElementById("features");
+  container.innerHTML = "";
+  services.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "feature-item";
+    div.textContent = `${s.name} ₹${s.price}`;
+    div.dataset.id = s.service_id;
+    div.addEventListener("click", () => toggleFeature(s, div));
+    container.appendChild(div);
+  });
+}
+
+// Toggle selected services
+function toggleFeature(service, el){
+  const index = selectedFeatures.findIndex(f => f.service_id === service.service_id);
+  if(index === -1){
+    selectedFeatures.push(service);
+    el.classList.add("selected");
+    renderSlotsByService(service.service_id);
+  } else {
+    selectedFeatures.splice(index, 1);
+    el.classList.remove("selected");
+    document.getElementById("time-slots").innerHTML="";
+    selectedTime = null;
+  }
+  updateBookingSummary();
+}
+
+// Render time slots for a service
+function renderSlotsByService(serviceId){
+  const slotObj = slots_by_service.find(s => s.service_id == serviceId);
+  const container = document.getElementById("time-slots");
+  container.innerHTML = "";
+  if(!slotObj) return;
+  slotObj.slots.forEach(slot => {
+    const div = document.createElement("div");
+    div.className = "time-slot";
+    div.textContent = `${slot.start_time} - ${slot.end_time}`;
+    div.dataset.id = slot.slot_id;
+    div.addEventListener("click", () => {
+      document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+      div.classList.add("selected");
+      selectedTime = slot;
+      updateBookingSummary();
+    });
+    container.appendChild(div);
+  });
+}
+
+// Update summary
+function updateBookingSummary() {
+  selectedTimeDisplay.textContent = selectedTime ? `${selectedTime.start_time} - ${selectedTime.end_time}` : "Not selected";
+  selectedServicesDisplay.textContent = selectedFeatures.length === 0 ? "None" : selectedFeatures.map(f => f.name).join(", ");
+  durationDisplay.textContent = `${selectedFeatures.reduce((total, f) => total + f.duration_minutes, 0)} min`;
+  totalPriceDisplay.textContent = `₹${selectedFeatures.reduce((total, f) => total + f.price, 0)}`;
+  selectedDateDisplay.textContent = selectedDate || "Not selected";
+  bookBtn.disabled = !selectedTime || selectedFeatures.length === 0 || !selectedDate;
+}
+
+// Date change listener
+bookingDateInput.addEventListener("change", async () => {
+  selectedDate = bookingDateInput.value;
+  if(!selectedDate) return;
+  await fetchSalon(selectedDate);
+});
+
+// Book button
+bookBtn.addEventListener("click", async () => {
+  if(!selectedTime || selectedFeatures.length===0 || !selectedDate){
+    alert("Please select date, time, and services.");
+    return;
+  }
+
+  const totalPrice = selectedFeatures.reduce((total,f)=>total+f.price,0);
+  const bookingData = {
+    salonId: salonInfo.id,
+    salonName: salonInfo.name,
+    slot_id: selectedTime.slot_id,
+    start_time: selectedTime.start_time,
+    end_time: selectedTime.end_time,
+    date: selectedDate,
+    service_id: selectedFeatures.map(f=>f.service_id),
+    totalPrice: totalPrice,
+    paymentMethod: document.getElementById("pay-on-shop").checked ? "pay_on_shop" : "pay_now",
+    customer_name: document.getElementById("customer-name").value,
+    customer_phone: document.getElementById("customer-phone").value,
+    customer_email: document.getElementById("customer-email").value
+  };
+
+  if(!bookingData.customer_name || !bookingData.customer_phone || !bookingData.customer_email){
+    alert("Please fill in your name, phone, and email.");
+    return;
+  }
+
+  // Send booking to backend
+  try {
+    const res = await fetch("/booking/now", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(bookingData)
+    });
+    const result = await res.json();
+    if(result.success){
+      alert("Booking confirmed!");
+      window.location.href = "/home";
+    } else alert("Booking failed. Try again.");
+  } catch(err){
+    console.error(err);
+    alert("Something went wrong.");
+  }
+});
+
+// Initial load
+fetchSalon();
+</script>
+</body>
+</html>

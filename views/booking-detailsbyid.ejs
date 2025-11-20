@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking Details - Salon Booking System</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+:root {--primary: #8a6d3b;--secondary: #d4b996;--success: #28a745;--danger: #dc3545;--light: #f8f9fa;--dark: #343a40;}
+body {background-color: #f5f5f5;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+.booking-card {border-radius: 15px;box-shadow: 0 4px 12px rgba(0,0,0,0.1);background-color: white;margin-bottom: 30px;}
+.page-title {color: var(--primary);font-weight: 700;margin-bottom: 25px;}
+.service-item {display: flex;justify-content: space-between;padding: 12px;border-bottom: 1px solid #eee;}
+.service-item:last-child {border-bottom: none;}
+.service-icon {width: 40px;height: 40px;border-radius: 50%;background-color: #f0e5d6;display: flex;align-items: center;justify-content: center;color: var(--primary);margin-right: 10px;}
+.detail-item {display: flex;justify-content: space-between;padding: 10px 0;border-bottom: 1px solid #f0f0f0;}
+.detail-item:last-child {border-bottom: none;}
+.cancellation-reason {width: 100%;padding: 10px;border: 1px solid #ddd;border-radius: 5px;margin-top: 10px;resize: vertical;}
+.status-badge {font-size: 0.9rem;padding: 5px 10px;}
+.action-buttons {display: flex;gap: 10px;justify-content: flex-end;margin-top: 20px;}
+.cancel-btn {background-color: var(--danger);border-color: var(--danger);}
+.cancel-btn:hover {background-color: #c82333;border-color: #bd2130;}
+.booking-header {background-color: var(--primary);color: white;padding: 15px;border-radius: 15px 15px 0 0;}
+.customer-info {background-color: #f8f9fa;padding: 15px;border-radius: 10px;margin-bottom: 20px;}
+.timeline {position: relative;padding-left: 30px;margin: 20px 0;}
+.timeline-item {position: relative;margin-bottom: 20px;}
+.timeline-item:last-child {margin-bottom: 0;}
+.timeline-item:before {content: '';position: absolute;left: -30px;top: 5px;width: 12px;height: 12px;border-radius: 50%;background-color: var(--primary);}
+.timeline-item:after {content: '';position: absolute;left: -24px;top: 11px;width: 2px;height: calc(100% + 10px);background-color: var(--primary);}
+.timeline-item:last-child:after {display: none;}
+.confirmation-modal {max-width: 500px;}
+.email-preview {background-color: #f8f9fa;border: 1px solid #dee2e6;border-radius: 5px;padding: 15px;margin-top: 15px;font-size: 0.9rem;}
+.service-cancel-btn {font-size: 0.8rem;padding: 3px 8px;}
+.cancelled-service {opacity: 0.7;background-color: #f8f9fa;}
+.cancelled-service .service-name {text-decoration: line-through;}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<%- include('header') %>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="page-title">Booking Details</h2>
+                <a href="#" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Bookings
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="booking-card">
+                <div class="booking-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Booking #<span id="bookingId">...</span></h4>
+                        <span class="badge status-badge bg-success" id="bookingStatus">...</span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="customer-info" id="customerInfo"></div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Services Booked</h5>
+                        <small class="text-muted">Click on a service to cancel individually</small>
+                    </div>
+                    <div id="servicesContainer"></div>
+
+                    <hr>
+
+                    <h5 class="mb-3">Booking Summary</h5>
+                    <div class="detail-item">
+                        <span>Subtotal</span>
+                        <span id="subtotal">₹0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Tax (8%)</span>
+                        <span id="tax">₹0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Discount (Membership)</span>
+                        <span class="text-success" id="discount">-₹0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span><strong>Total Amount</strong></span>
+                        <span><strong id="totalAmount">₹0</strong></span>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3">Booking Timeline</h5>
+                    <div class="timeline" id="timeline"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="booking-card p-4" id="bookingActions">
+                <!-- Booking Actions will be populated dynamically -->
+            </div>
+
+            <div class="booking-card p-4 mt-4">
+                <h5 class="mb-3">Cancellation Policy</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Free cancellation up to 24 hours before appointment</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> 50% charge for cancellations within 24 hours</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> No refund for no-shows</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Individual services can be cancelled without affecting others</li>
+                </ul>
+                <div class="alert alert-info mt-3">
+                    <small><i class="fas fa-info-circle me-1"></i> Cancelling services may incur fees as per our policy.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+
+<!-- Service Cancel Modal -->
+<div class="modal fade" id="serviceCancelModal" tabindex="-1">
+  <div class="modal-dialog confirmation-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cancel Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to cancel <span id="serviceName"></span>?
+        <div class="mt-2">
+          Remaining services: <span id="previewRemainingServices"></span>
+        </div>
+        <div class="mt-2">
+          Updated total: <span id="previewUpdatedTotal"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="confirmServiceCancel" class="btn btn-danger">Confirm Cancel</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Booking Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog confirmation-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cancel Booking</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to cancel this booking?
+      </div>
+      <div class="modal-footer">
+        <button id="confirmCancel" class="btn btn-danger">Confirm Cancel</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog confirmation-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="successTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="successMessage"></p>
+        <p id="policyMessage" class="text-muted"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const pathParts = window.location.pathname.split('/');
+    const bookingId = pathParts[pathParts.length - 1];
+
+    let bookingData = null;
+
+    // --- Global totals ---
+    let subtotal = 0;
+    let tax = 0;
+    let discount = 0;
+    let total = 0;
+
+    const subtotalEl = document.getElementById('subtotal');
+    const taxEl = document.getElementById('tax');
+    const discountEl = document.getElementById('discount');
+    const totalEl = document.getElementById('totalAmount');
+
+    // --- Modal instances ---
+    const serviceCancelModal = new bootstrap.Modal(document.getElementById('serviceCancelModal'));
+    const cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+    // --- Fetch booking data ---
+    try {
+        const res = await fetch(`/booking/bookingbyid/${bookingId}`);
+        const result = await res.json();
+        if (!result.success) {
+            alert(result.message);
+            return;
+        }
+        bookingData = result.data;
+
+        // --- Booking Header ---
+        const bookingIdEl = document.getElementById('bookingId');
+        if (bookingIdEl) bookingIdEl.textContent = bookingData.booking_id;
+
+        const statusBadge = document.getElementById('bookingStatus');
+        if (statusBadge) {
+            statusBadge.textContent = bookingData.booking_status;
+            statusBadge.className = `badge status-badge ${bookingData.status === 'confirmed' ? 'bg-success' : 'bg-warning'}`;
+        }
+
+        // --- Customer Info ---
+        const customerInfoEl = document.getElementById('customerInfo');
+        if (customerInfoEl) customerInfoEl.innerHTML = `
+            <h5 class="mb-3">Customer Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Name:</strong> ${bookingData.user_name}</p>
+                    <p><strong>Email:</strong> ${bookingData.user_email}</p>
+                    <p><strong>Phone:</strong> ${bookingData.user_phone}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Salon:</strong> ${bookingData.salon_name || 'N/A'}</p>
+                    <p><strong>Booking Date:</strong> ${bookingData.booking_date}</p>
+                </div>
+            </div>
+        `;
+
+        // --- Services ---
+       // --- Services ---
+const servicesContainer = document.getElementById('servicesContainer');
+if (servicesContainer) {
+    servicesContainer.innerHTML = '';
+    console.log("bok",bookingData);
+    
+    bookingData.services.forEach(service => {
+        const div = document.createElement('div');
+        div.className = 'service-item';
+        div.dataset.serviceId = service.detail_id;
+
+        // Check if service is cancelled
+        const isCancelled = service.service_status === 'cancelled' || service.cancelled;
+
+
+        div.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="service-icon"><i class="fas fa-cut"></i></div>
+                <div>
+                    <h6 class="mb-0 service-name">${service.service_name}</h6>
+                </div>
+            </div>
+            <div class="text-end">
+                <div>${`₹${service.service_amount}`}</div>
+                <small>${ `${service.start_time} - ${service.end_time}`}</small>
+                <div class="mt-1">
+                    ${isCancelled
+                        ? '<span class="badge bg-danger">Cancelled</span>'
+                        : '<button class="btn btn-outline-danger btn-sm service-cancel-btn" data-bs-toggle="modal" data-bs-target="#serviceCancelModal">Cancel Service</button>'
+                    }
+                </div>
+            </div>
+        `;
+        if(isCancelled) div.classList.add('cancelled-service');
+
+        servicesContainer.appendChild(div);
+    });
+}
+
+
+        // --- Booking Summary ---
+        subtotal = bookingData.services.reduce((sum, s) => sum + Number(s.service_amount), 0);
+        tax = Math.round(subtotal * 0.08);
+        discount = 0;
+        total = subtotal + tax - discount;
+
+        if(subtotalEl) subtotalEl.textContent = `₹${subtotal}`;
+        if(taxEl) taxEl.textContent = `₹${tax}`;
+        if(discountEl) discountEl.textContent = `-₹${discount}`;
+        if(totalEl) totalEl.textContent = `₹${total}`;
+
+        // --- Timeline ---
+        const timeline = document.getElementById('timeline');
+        if (timeline) timeline.innerHTML = `
+            <div class="timeline-item">
+                <h6 class="mb-1">Booking Created</h6>
+                <p class="text-muted mb-0">${bookingData.booking_date} at 10:00 AM</p>
+            </div>
+            <div class="timeline-item">
+                <h6 class="mb-1">Booking Confirmed</h6>
+                <p class="text-muted mb-0">${bookingData.booking_date} at 10:15 AM</p>
+            </div>
+        `;
+    } catch (err) {
+        console.error(err);
+        alert('Failed to fetch booking data.');
+        return;
+    }
+
+    // --- Current service tracking ---
+    let currentServiceId = null;
+    let currentServiceName = null;
+
+    // --- Helper: recalc totals ---
+    function recalcTotals() {
+        const activeServices = bookingData.services.filter(s => !s.cancelled);
+        subtotal = activeServices.reduce((sum, s) => sum + Number(s.service_amount), 0);
+        tax = Math.round(subtotal * 0.08);
+        total = subtotal + tax - discount;
+
+        if(subtotalEl) subtotalEl.textContent = `₹${subtotal}`;
+        if(taxEl) taxEl.textContent = `₹${tax}`;
+        if(totalEl) totalEl.textContent = `₹${total}`;
+    }
+
+    // --- Service Cancel Button Click ---
+    document.addEventListener('click', function(e) {
+        if(e.target.classList.contains('service-cancel-btn')) {
+            const serviceItem = e.target.closest('.service-item');
+            if(!serviceItem) return;
+
+            currentServiceId = serviceItem.dataset.serviceId;
+            currentServiceName = serviceItem.querySelector('.service-name')?.textContent || '';
+
+            const serviceNameEl = document.getElementById('serviceName');
+            if (serviceNameEl) serviceNameEl.textContent = currentServiceName;
+
+            const previewRemainingServices = document.getElementById('previewRemainingServices');
+            if (previewRemainingServices) {
+                const remainingServices = bookingData.services
+                    .filter(s => s.detail_id != currentServiceId && !s.cancelled)
+                    .map(s => s.service_name)
+                    .join(', ');
+                previewRemainingServices.textContent = remainingServices;
+            }
+
+            const previewUpdatedTotal = document.getElementById('previewUpdatedTotal');
+            if (previewUpdatedTotal) {
+                const remainingSubtotal = bookingData.services
+                    .filter(s => s.detail_id != currentServiceId && !s.cancelled)
+                    .reduce((sum, s) => sum + Number(s.service_amount), 0);
+                const newTax = Math.round(remainingSubtotal * 0.08);
+                const newTotal = remainingSubtotal + newTax - discount;
+                previewUpdatedTotal.textContent = `₹${newTotal}`;
+            }
+        }
+    });
+
+    // --- Confirm Service Cancel ---
+    document.getElementById('confirmServiceCancel')?.addEventListener('click', async function() {
+        serviceCancelModal.hide();
+        try {
+            const res = await fetch(`/booking/cancelService/${currentServiceId}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status: 'cancelled' })
+});
+
+            const result = await res.json();
+            if(!result.success) throw new Error(result.message);
+        } catch (error) {
+            console.error(error);
+            alert('Failed to cancel service: ' + error.message);
+            return;
+        }
+
+        const serviceItem = document.querySelector(`.service-item[data-service-id="${currentServiceId}"]`);
+        const btnParent = serviceItem?.querySelector('.service-cancel-btn')?.parentNode;
+        if(serviceItem) serviceItem.classList.add('cancelled-service');
+        if(btnParent) btnParent.innerHTML = '<span class="badge bg-danger">Cancelled</span>';
+
+        const cancelledService = bookingData.services.find(s => s.detail_id == currentServiceId);
+        if(cancelledService) cancelledService.cancelled = true;
+
+        recalcTotals();
+
+        // Show success modal
+        document.getElementById('successTitle').textContent = 'Service Cancelled';
+        document.getElementById('successMessage').textContent = `Your ${currentServiceName} service has been successfully cancelled.`;
+        document.getElementById('policyMessage').textContent = 'As per our cancellation policy, no fee was charged since you cancelled more than 24 hours in advance.';
+        successModal.show();
+        setTimeout(() => {
+            window.location.href='/booking/details'
+        }, 2000);
+    });
+
+    // --- Confirm Booking Cancel ---
+    document.getElementById('confirmCancel')?.addEventListener('click', async function() {
+        cancelModal.hide();
+        try {
+            const res = await fetch(`/booking/cancelBooking/${bookingId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'cancelled' })
+            });
+            const result = await res.json();
+            if(!result.success) throw new Error(result.message);
+
+            // Show success modal
+            document.getElementById('successTitle').textContent = 'Booking Cancelled';
+            document.getElementById('successMessage').textContent = 'Your booking has been successfully cancelled.';
+            document.getElementById('policyMessage').textContent = 'As per our cancellation policy, no fee was charged since you cancelled more than 24 hours in advance.';
+            successModal.show();
+
+            document.querySelectorAll('.service-cancel-btn').forEach(btn => btn.disabled = true);
+        } catch(err) {
+            alert('Failed to cancel booking: ' + err.message);
+            console.error(err);
+        }
+    });
+});
+</script>
+
+
+</body>
+</html>

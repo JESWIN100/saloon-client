@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salon & Beauty Parlor Booking</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Custom styles */
+    .hero {
+      background: url('https://img.freepik.com/premium-photo/luxurious-salon-interior-with-soft-tones-elegant-modern-design_1025753-152493.jpg?semt=ais_hybrid&w=740&q=80') no-repeat center center;
+      background-size: cover;
+      color: white;
+      padding: 120px 0;
+      text-align: center;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feature-icon {
+      font-size: 50px;
+      color: #ff6b81;
+    }
+    .salon-card img {
+      height: 200px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+ <%- include('header') %>
+
+<!-- Hero Section -->
+<section id="hero" class="hero">
+  <div class="container text-center">
+    <h1 class="display-4 fw-bold">Book Your Salon & Beauty Services Online</h1>
+    <p class="lead">Find nearby salons, choose your service, and book your slot in just a few clicks!</p>
+    <a href="#booking" class="btn btn-lg btn-warning text-white">Book Now</a>
+  </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-5">
+  <div class="container text-center">
+    <h2 class="mb-4">About Our Platform</h2>
+    <p class="lead">Our system helps customers find salons by location, browse services, and book slots instantly.  
+    Salons and managers can manage services, slots, and customer bookings seamlessly.</p>
+    <a href="https://wa.me/919562212848?text=urlencodedtext">WhatsApp Me</a>   
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-light">
+  <div class="container text-center">
+    <h2 class="mb-5">Features</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card p-4 h-100 border-0 shadow-sm">
+          <div class="feature-icon mb-3">&#128197;</div>
+          <h5>Online Slot Booking</h5>
+          <p>Book available slots at your favorite salon easily online.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 h-100 border-0 shadow-sm">
+          <div class="feature-icon mb-3">&#128100;</div>
+          <h5>Multiple User Roles</h5>
+          <p>Support for customers, salon managers, and super admins for smooth operations.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 h-100 border-0 shadow-sm">
+          <div class="feature-icon mb-3">&#128176;</div>
+          <h5>Secure Payments</h5>
+          <p>Easy and secure payments for your services directly through the platform.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Popular Salons Section -->
+<section id="saloons" class="py-5">
+  <div class="container">
+    <h2 class="mb-5 text-center">Popular Salons Near You</h2>
+    <div class="row g-4" id="popular-salons-container">
+      <!-- Salons will be dynamically inserted here -->
+    </div>
+  </div>
+</section>
+
+<!-- Booking CTA Section -->
+<section id="booking" class="py-5 bg-warning text-white text-center">
+  <div class="container">
+    <h2>Ready to Book Your Slot?</h2>
+    <p class="lead">Select your salon, choose a service, and reserve your spot instantly.</p>
+    <a href="booking.html" class="btn btn-dark btn-lg">Book Now</a>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-5">
+  <div class="container">
+    <h2 class="mb-4 text-center">Contact Us</h2>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <form>
+          <div class="mb-3">
+            <input type="text" class="form-control" placeholder="Your Name" required>
+          </div>
+          <div class="mb-3">
+            <input type="email" class="form-control" placeholder="Your Email" required>
+          </div>
+          <div class="mb-3">
+            <textarea class="form-control" rows="4" placeholder="Your Message" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-warning text-white w-100">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pincode Modal -->
+<div class="modal fade" id="pincodeModal" tabindex="-1" aria-labelledby="pincodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pincodeModalLabel">Enter Your Pincode</h5>
+      </div>
+      <div class="modal-body">
+        <form id="pincodeForm">
+          <div class="mb-3">
+            <input type="text" class="form-control" id="pincodeInput" name="pincode" placeholder="Enter your pincode" required>
+          </div>
+          <button type="submit" class="btn btn-warning w-100">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="py-3 bg-dark text-white text-center">
+  &copy; 2025 Salon Booking System. All Rights Reserved.
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show pincode modal on load
+    var pincodeModal = new bootstrap.Modal(document.getElementById('pincodeModal'));
+    pincodeModal.show();
+
+    const pincodeForm = document.getElementById('pincodeForm');
+    pincodeForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const pincode = document.getElementById('pincodeInput').value;
+
+        try {
+            const response = await fetch('/get-salons-by-pincode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode })
+            });
+
+            if (response.status === 404) {
+                alert('No salons found for this pincode.');
+                return;
+            }
+
+            const salons = await response.json();
+            console.log(salons);
+
+            const container = document.getElementById('popular-salons-container');
+            container.innerHTML = '';
+
+            salons.forEach(salon => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+                col.innerHTML = `
+                  <div class="card salon-card shadow-sm">
+                    <img src="${salon.image ? `http://localhost:2255/uploads/${salon.image}` : 'https://content3.jdmagicbox.com/v2/comp/ahmedabad/v6/079pxx79.xx79.230129145510.y5v6/catalogue/shades-of-blackk-spalon-thaltej-ahmedabad-beauty-parlours-h0hbyim8ww.jpg'}" class="card-img-top" alt="${salon.name}">
+                    <div class="card-body">
+                      <h5 class="card-title">${salon.name}</h5>
+                      <p class="card-text">${salon.description || 'No description available'}</p>
+                      <a href="/salon/slot-booking/${salon.salon_id}" class="btn btn-warning text-white">Book Slot</a>
+                    </div>
+                  </div>
+                `;
+                container.appendChild(col);
+            });
+
+            pincodeModal.hide();
+            window.location.hash = "#saloons";
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Something went wrong. Please try again.');
+        }
+    });
+});
+</script>
+
+</body>
+</html>
