@@ -61,7 +61,12 @@ console.log("e",email);
     //   text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
     // });
 
-    res.json({ message: 'OTP sent successfully' },otp);
+    res.json({
+  success: true,
+  message: 'OTP sent successfully',
+  otp: otp
+});
+
   } catch (err) {
     console.error('Error in crateuser:', err);
      await logErrorToServer('User Module', 'authController.js', 'Error in crateuser', err.message);
