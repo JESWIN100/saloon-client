@@ -30,6 +30,7 @@ const crateuser = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: 'Email is required' });
 
+console.log("e",email);
 
   try {
     const users = await query('SELECT * FROM users WHERE email = ?', [email]);
@@ -53,14 +54,14 @@ const crateuser = async (req, res) => {
 
     await query('INSERT INTO user_otp_codes (email, otp) VALUES (?, ?)', [email, otp]);
 
-    await transporter.sendMail({
-      from: 'morent369@gmail.com',
-      to: email,
-      subject: 'Your OTP Code',
-      text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
-    });
+    // await transporter.sendMail({
+    //   from: 'morent369@gmail.com',
+    //   to: email,
+    //   subject: 'Your OTP Code',
+    //   text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
+    // });
 
-    res.json({ message: 'OTP sent successfully' });
+    res.json({ message: 'OTP sent successfully' },otp);
   } catch (err) {
     console.error('Error in crateuser:', err);
      await logErrorToServer('User Module', 'authController.js', 'Error in crateuser', err.message);
@@ -73,10 +74,6 @@ const verify = async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp)
     return res.status(400).json({ message: 'Email and OTP are required' });
-
-
-
-
 
   try {
     // 1) Verify OTP
