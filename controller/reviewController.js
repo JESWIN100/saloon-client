@@ -1,13 +1,14 @@
-const connection=require('../config/connection')
-const addReview = (req, res) => {
+const connection=require('../config/connection');
+const { logErrorToServer } = require('../utils/errorLogger');
+const addReview = async(req, res) => {
   const {bookingId, salon_id, customer_id, customer_name, rating, review_text } = req.body;
-
 
 
 try {
     
   if (!salon_id || !customer_id || !customer_name || !rating) {
-    return res.status(400).json({ message: "Missing required fields" });
+    throw new Error ("Missing required fields")
+    // return res.status(400).json({ message: "" });
   }
 
   const sql = `
@@ -23,6 +24,12 @@ try {
     return res.json({ message: "Review added successfully" });
   });
 } catch (error) {
+   await logErrorToServer(
+      'Home Module',
+      'reviewController.js',
+      'addReview Error',
+      error.message
+    );
     console.log(error);
     
 }
@@ -30,10 +37,11 @@ try {
 };
 
 
-const getSalonRatingStats = (req, res) => {
+const getSalonRatingStats = async(req, res) => {
   const { salon_id } = req.params;
-console.log(salon_id);
 
+  try {
+    
   const sql = `
     SELECT 
       ROUND(AVG(rating), 1) AS average_rating,
@@ -52,6 +60,17 @@ console.log(salon_id);
 
     return res.json(data);
   });
+  } catch (error) {
+     await logErrorToServer(
+      'Home Module',
+      'reviewController.js',
+      'getSalonRatingStats Error',
+      error.message
+    );
+    console.log(error);
+    
+  }
+
 };
 
 
@@ -59,7 +78,8 @@ const check = (req, res) => {
   const { bookingId, customer_id } = req.params;
 
 
-  const sql = `SELECT * FROM reviews WHERE booking_id = ? AND customer_id = ?`;
+try {
+    const sql = `SELECT * FROM reviews WHERE booking_id = ? AND customer_id = ?`;
   connection.query(sql, [bookingId, customer_id], (err, results) => {
     if (err) return res.status(500).json({ error: err });
 
@@ -68,6 +88,10 @@ const check = (req, res) => {
       hasReview: results.length > 0 // true if this customer already rated
     });
   });
+} catch (error) {
+  console.log(error);
+  
+}
 };
 
 

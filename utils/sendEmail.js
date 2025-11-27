@@ -24,69 +24,131 @@ const sendMail = async (to, subject, text, html) => {
   }
 };
 
-const sendConfirmation = async (customerName, customerEmail, salonName, serviceNames, startTime, endTime) => {
-  const servicesStr = Array.isArray(serviceNames) ? serviceNames.join(', ') : serviceNames;
+const sendConfirmation = async (customerName, customerEmail, salonName,date, serviceName, startTime, endTime) => {
   return sendMail(
     customerEmail,
-    `Booking Sucessfull - ${salonName}`,
-    `Hi ${customerName}, your booking at ${salonName} for ${servicesStr} from ${startTime} to ${endTime} has been confirmed!`,
-    `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 8px;">
-      <div style="text-align: center; background-color: #e91e63; color: white; padding: 15px; border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0; font-size: 24px;">Booking Confirmed!</h1>
-        <p style="margin: 5px 0 0 0; font-size: 16px;">${salonName}</p>
-      </div>
-      <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
-        <p style="font-size: 16px; line-height: 1.5;">Hi <strong>${customerName}</strong>,</p>
-        <p style="font-size: 16px; line-height: 1.5;">Your booking at <strong>${salonName}</strong> has been confirmed! ✅</p>
-        <div style="background-color: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0; font-size: 16px;"><strong>Service:</strong> ${servicesStr}</p>
-          <p style="margin: 10px 0 0 0; font-size: 16px;"><strong>Time:</strong> ${startTime} - ${endTime}</p>
+    `Booking Confirmed - ${salonName}`,
+    `Hi ${customerName}, your booking at ${salonName} for ${serviceName} is confirmed.`,
+    `
+    <div style="font-family: Arial, sans-serif; max-width: 650px; margin: auto; background: #f4f4f4; padding: 20px;">
+      
+      <!-- Outer Card -->
+      <div style="background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden;">
+
+        <!-- Header -->
+        <div style="background: #1e47e9ff; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0; font-size: 26px;">Booking Confirmed</h2>
+          <p style="margin: 5px 0 0 0; font-size: 16px; opacity: 0.9;">${salonName}</p>
         </div>
-        <p style="font-size: 16px; line-height: 1.5;">We look forward to seeing you!</p>
-        <p style="font-size: 16px; line-height: 1.5; text-align: center; margin-top: 30px;">💇‍♀️ <strong>Go 2 Salon Team</strong></p>
+
+        <!-- Body -->
+        <div style="padding: 25px;">
+
+          <p style="font-size: 16px;">Hi <strong>${customerName}</strong>,</p>
+
+          <p style="font-size: 16px; line-height: 1.6;">
+            Your appointment has been successfully confirmed.  
+            Below are your booking details:
+          </p>
+
+          <!-- Booking Details Card -->
+          <div style="background: #fafafa; padding: 18px; border-radius: 8px; border: 1px solid #eee; margin: 20px 0;">
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Service:</strong> ${date}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Date:</strong> ${serviceName}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Time:</strong> ${startTime} – ${endTime}</p>
+          </div>
+
+          <!-- Footer -->
+          <p style="font-size: 16px; line-height: 1.6;">
+            We look forward to serving you. If you have any questions, feel free to contact us anytime.
+          </p>
+
+          <p style="font-size: 18px; text-align: center; margin-top: 30px; font-weight: bold;">
+             Go 2 Salon Team
+          </p>
+
+        </div>
       </div>
-    </div>`
+
+    </div>
+    `
   );
 };
 
-const sendCancellationEmail = async (customerEmail, customerName, reason) => {
-
-  const message = `
-    Your booking has been cancelled as per your request.
-    <br/><br/>
-    <strong>Cancellation Reason:</strong> ${reason}
-    <br/><br/>
-    We respect your choice and hope to serve you in the future.
-    <br/><br/>
-    <strong>Cancellation Policy:</strong><br/>
-    - If payment was made online, refund (if applicable) will be processed within 3-7 business days.<br/>
-    - If cancellation occurred after service preparation has begun, some charges may still apply.<br/>
-    - Please contact our support team if you have any questions.
-  `;
+const sendCancellationEmail = async (
+  customerEmail, 
+  customerName,
+  salonName, 
+  salonAddress, 
+  bookingDate, 
+  slotTime, 
+  serviceName,
+  reason
+) => {
 
   return sendMail(
     customerEmail,
-    "Your Booking has been Cancelled",
-    `Hi ${customerName}, your booking has been cancelled.`,
-    `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 8px;">
-      <div style="text-align: center; background-color: #d32f2f; color: white; padding: 15px; border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0; font-size: 24px;">Booking Cancelled</h1>
-        <p style="margin: 5px 0 0 0; font-size: 16px;">Go 2 Salon</p>
+    `Booking Cancelled - ${salonName}`,
+    `Hi ${customerName}, your booking at ${salonName} for ${serviceName} on ${bookingDate} has been cancelled.`,
+    `
+    <div style="font-family: Arial, sans-serif; max-width: 650px; margin: auto; background: #f4f4f4; padding: 20px;">
+      
+      <!-- Outer Card -->
+      <div style="background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden;">
+
+        <!-- Header -->
+        <div style="background: #d32f2f; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0; font-size: 26px;">Booking Cancelled</h2>
+          <p style="margin: 5px 0 0 0; font-size: 16px; opacity: 0.9;">${salonName}</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 25px;">
+
+          <p style="font-size: 16px;">Hi <strong>${customerName}</strong>,</p>
+
+          <p style="font-size: 16px; line-height: 1.6;">
+            Your booking has been successfully cancelled.  
+            Below are the details of your cancelled appointment:
+          </p>
+
+          <!-- Booking Details Card -->
+          <div style="background: #fafafa; padding: 18px; border-radius: 8px; border: 1px solid #eee; margin: 20px 0;">
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Service:</strong> ${serviceName}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Salon:</strong> ${salonName}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Address:</strong> ${salonAddress}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Date:</strong> ${bookingDate}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Time:</strong> ${slotTime}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Reason:</strong> ${reason}</p>
+          </div>
+
+          <!-- Cancellation Policy -->
+          <div style="background: #fff3f3; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb;">
+            <p style="margin: 0; font-size: 14px; color: #d32f2f;">
+              <strong>Cancellation Policy:</strong><br/>
+              • More than 24 hours before: 100% refund<br/>
+              • 24 to 12 hours before: 50% refund<br/>
+              • 12 to 6 hours before: 30% refund<br/>
+              • Less than 6 hours before: No refund
+            </p>
+          </div>
+
+          <p style="font-size: 16px; line-height: 1.6; margin-top: 25px;">
+            We hope to serve you in the future. If you have any questions, feel free to contact us anytime.
+          </p>
+
+          <p style="font-size: 18px; text-align: center; margin-top: 30px; font-weight: bold;">
+            Go 2 Salon Team
+          </p>
+
+        </div>
       </div>
-      <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
-        <p style="font-size: 16px; line-height: 1.5;">Hi <strong>${customerName}</strong>,</p>
-        <p style="font-size: 16px; line-height: 1.5;">
-          ${message}
-        </p>
-        <hr style="margin: 25px 0;">
-        <p style="font-size: 14px; color: #555;">
-          If you have any questions or need assistance, feel free to reply to this email or contact our support team.
-        </p>
-        <p style="font-size: 16px; line-height: 1.5; margin-top: 30px;">Regards,<br/><strong>Go 2 Salon Team</strong></p>
-      </div>
-    </div>`
+
+    </div>
+    `
   );
 };
+
 
 
 

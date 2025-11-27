@@ -21,7 +21,6 @@ const createBooking = async (req, res) => {
       totalPrice
     } = req.body;
     
-    
 
    
     
@@ -29,7 +28,6 @@ const createBooking = async (req, res) => {
     const payment_status = payment_method === 'pay_now' ? 'paid' : 'pending';
     const booking_status = 'pending';
 
-    // Helper function for async SQL
     const query = (sql, params) =>
       new Promise((resolve, reject) => {
         connection.query(sql, params, (err, results) => {
@@ -38,7 +36,6 @@ const createBooking = async (req, res) => {
         });
       });
 
-    // 1️⃣ Insert into booking_master
     const insertMasterSql = `
       INSERT INTO booking_master 
       (customer_id, salon_id,	booking_date, status, payment_status, total_amount)
@@ -83,9 +80,13 @@ const createBooking = async (req, res) => {
     const serviceNames = serviceRows.map(s => s.name).join(', ');
 
     // 4️⃣ Send confirmation email
-    sendConfirmation(customer_name, customer_email, salonName, serviceNames, start_time, end_time)
+    sendConfirmation(customer_name, customer_email, salonName, serviceNames,date, start_time, end_time)
       .then((sent) => {
-        if (!sent) console.warn('Booking saved, but email failed to send.');
+        if (!sent){
+          throw new Error("Booking saved, but email failed to send.")
+
+        }
+          
       })
       .catch((err) => console.error('Email error:', err));
 
@@ -123,7 +124,9 @@ const booking_razopay = async (req, res) => {
     try {
         const { amount } = req.body;
 
-
+if(!amount){
+  throw new Error("amount is required!")
+}
         
         const order = await razorpay.orders.create({
             amount: amount * 100, // convert to paise
@@ -136,6 +139,7 @@ const booking_razopay = async (req, res) => {
         
     } catch (err) {
         console.error(err);
+        await logErrorToServer('Booking Module', 'bookingController.js', 'booking_razopay Error', err.message);
         res.status(500).send("Razorpay order creation failed");
     }
 };
@@ -179,10 +183,11 @@ const razopay_success = async (req, res) => {
       .digest("hex");
 
     if (generated_signature !== signature) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment verification failed",
-      });
+      throw new Error("Payment verification failed")
+      // return res.status(400).json({
+      //   success: false,
+      //   message: "Payment verification failed",
+      // });
     }
 
    
@@ -362,6 +367,7 @@ const getBookingsByCustomerId = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ getBookingsByCustomerId Error:", error);
+    await logErrorToServer("Payment Module", "bookingController.js", "getBookingsByCustomerId Error", error.message);
     res.status(500).json({
       success: false,
       message: "Server error occurred",
@@ -380,8 +386,12 @@ const getBookingById = async(req, res) => {
   const { id } = req.params; // booking_id from URL params
 try {
   
+
+
+
   if (!id) {
-    return res.status(400).json({ success: false, message: "Booking ID is required" });
+    throw new Error("Booking ID is required")
+    // return res.status(400).json({ success: false, message: "Booking ID is required" });
   }
 
   const query = `
@@ -479,7 +489,9 @@ const cancellBooking = async (req, res) => {
     const cancelSql = 'UPDATE booking_details SET status = ? WHERE detail_id = ?';
     connection.query(cancelSql, [status, detailId], (err, result) => {
       if (err) return res.status(500).json({ success: false, message: 'Database error' });
-      if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Service not found' });
+      if (result.affectedRows === 0)
+        throw new Error("Service not found")
+        //  return res.status(404).json({ success: false, message: 'Service not found' });
 
       // 2️⃣ Log cancellation
       const logSql = `
@@ -491,7 +503,9 @@ const cancellBooking = async (req, res) => {
       // 3️⃣ Get booking_id to verify if remaining services exist
       const getBookingSql = 'SELECT booking_id FROM booking_details WHERE detail_id = ?';
       connection.query(getBookingSql, [detailId], (err2, bookingResult) => {
-        if (err2) return res.status(500).json({ success: false, message: 'Database error' });
+        if (err2) 
+          throw new Error("Database error")
+          // return res.status(500).json({ success: false, message: 'Database error' });
 
         const bookingId = bookingResult[0].booking_id;
 
@@ -508,21 +522,51 @@ const cancellBooking = async (req, res) => {
 
           // 5️⃣ Fetch user + service name for email
           const getUserSql = `
-            SELECT u.name AS customer_name, u.email AS customer_email, s.name AS service_name
-            FROM users u
-            JOIN booking_master bm ON u.user_id = bm.customer_id
-            JOIN booking_details bd ON bm.booking_id = bd.booking_id
-            JOIN services s ON bd.service_id = s.service_id
-            WHERE bd.detail_id = ?
-          `;
+SELECT 
+  u.name AS customer_name,
+  u.email AS customer_email,
+  s.name AS service_name,
+  sm.name AS salon_name,
+  sm.address AS salon_address,
+  bm.booking_date AS booking_date,
+  CONCAT(bd.start_time, ' - ', bd.end_time) AS slot_time
+FROM users u
+JOIN booking_master bm ON u.user_id = bm.customer_id
+JOIN booking_details bd ON bm.booking_id = bd.booking_id
+JOIN services s ON bd.service_id = s.service_id
+JOIN salons sm ON bm.salon_id = sm.salon_id
+WHERE bd.detail_id = ?;
+
+`;
 
           connection.query(getUserSql, [detailId], async (err4, userResult) => {
+            console.log(err4);
+
             if (!err4 && userResult.length > 0) {
-              const { customer_name, customer_email, service_name } = userResult[0];
+
+              const { 
+  customer_name, 
+  customer_email, 
+  service_name, 
+  salon_name, 
+  salon_address, 
+  booking_date, 
+  slot_time 
+} = userResult[0];
+;
+
+
+
+
 
               await sendCancellationEmail(
                 customer_email,
                 customer_name,
+                  salon_name, 
+  salon_address, 
+  booking_date, 
+  slot_time ,
+  reason,
                 `Your service "${service_name}" has been cancelled.${reason ? ` Reason: ${reason}` : ''}`
               );
             }

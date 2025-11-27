@@ -27,12 +27,20 @@ const transporter = nodemailer.createTransport({
 
 // 📨 Send OTP
 const crateuser = async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ message: 'Email is required' });
 
-console.log("e",email);
+  
+  
 
   try {
+const { email } = req.body;
+
+ if (!email) {
+  throw new Error("Email is required");
+}
+
+
+
+
     const users = await query('SELECT * FROM users WHERE email = ?', [email]);
      let userId;
     
@@ -54,13 +62,15 @@ console.log("e",email);
 
     await query('INSERT INTO user_otp_codes (email, otp) VALUES (?, ?)', [email, otp]);
 
-    // await transporter.sendMail({
-    //   from: 'morent369@gmail.com',
-    //   to: email,
-    //   subject: 'Your OTP Code',
-    //   text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
-    // });
+    await transporter.sendMail({
+      from: 'morent369@gmail.com',
+      to: email,
+      subject: 'Your OTP Code',
+      text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
+    });
 
+    console.log(otp);
+    
     res.json({
   success: true,
   message: 'OTP sent successfully',
@@ -68,7 +78,7 @@ console.log("e",email);
 });
 
   } catch (err) {
-    console.error('Error in crateuser:', err);
+    console.error('Error in crateuser:', err.message);
      await logErrorToServer('User Module', 'authController.js', 'Error in crateuser', err.message);
     res.status(500).json({ message: 'Something went wrong' });
   }
@@ -78,7 +88,10 @@ console.log("e",email);
 const verify = async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp)
-    return res.status(400).json({ message: 'Email and OTP are required' });
+    throw new Error("Email and OTP are required")
+    // return res.status(400).json({ message: 'Email and OTP are required' });
+
+
 
   try {
     // 1) Verify OTP
@@ -87,10 +100,10 @@ const verify = async (req, res) => {
       [email, otp]
     );
 
-    console.log("rows",rows);
     
     if (rows.length === 0)
-      return res.status(400).json({ message: 'Invalid OTP' });
+       throw new Error("Invalid OTP")
+      // return res.status(400).json({ message: 'Invalid OTP' });
 
     const otpEntry = rows[0];
     // const createdTime = new Date(otpEntry.created_at);
@@ -108,11 +121,12 @@ const verify = async (req, res) => {
     const userRows = await query('SELECT user_id, name, email, mobile FROM users WHERE email = ?', [email]);
 
     if (userRows.length === 0) {
-      return res.status(404).json({ message: 'User not found after OTP verify' });
+      throw new Error("User not found after OTP verify")
+      // return res.status(404).json({ message: 'User not found after OTP verify' });
     }
 
     const user = userRows[0];
-console.log("user",user);
+
 
 
     // 5) Send success response with user details
@@ -152,11 +166,13 @@ const today = new Date().toISOString().split("T")[0];
   connection.query(userQuery, [id], (err, userResult) => {
     if (err) {
       console.error("Error fetching user:", err);
-      return res.status(500).json({ success: false, message: "Database error" });
+      throw new Error("Database error")
+      // return res.status(500).json({ success: false, message: "Database error" });
     }
 
     if (userResult.length === 0) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      throw new Error("User not found")
+      // return res.status(404).json({ success: false, message: "User not found" });
     }
 
     const user = userResult[0];
@@ -165,7 +181,8 @@ const today = new Date().toISOString().split("T")[0];
     connection.query(statsQuery, [id], (err, statsResult) => {
       if (err) {
         console.error("Error fetching stats:", err);
-        return res.status(500).json({ success: false, message: "Database error" });
+        throw new Error("Database error")
+        // return res.status(500).json({ success: false, message: "Database error" });
       }
 
       const stats = statsResult[0];
@@ -232,7 +249,7 @@ const updateUserProfile = async (req, res) => {
     const result = await query(updateQuery, values);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      throw new Error("User not found")
     }
 
     // ✅ fetch updated user to send back to frontend
@@ -245,7 +262,7 @@ const updateUserProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error updating profile:", error);
+    console.error("❌ Error updating profile:", error.message);
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };

@@ -21,10 +21,12 @@ const getdatabypincode = async (req, res) => {
     connection.query(sql, [pincode], (err, results) => {
       if (err) {
         console.error(err);
+        // throw new Error("Database query error")
         return res.status(500).send('Database query error');
       }
 
       if (results.length === 0) {
+        // throw new Error("No salons found for this pincode")
         return res.status(404).send('No salons found for this pincode');
       }
 
@@ -70,6 +72,7 @@ const getSalonsByService = async (req, res) => {
 
   } catch (error) {
     console.log(error);
+     await logErrorToServer('Home Module', 'homeController.js', 'getSalonsByService Error', error.message);
     res.status(500).json({ message: "Server Error" });
   }
 };
@@ -82,11 +85,13 @@ const seacrchSalonsByName = async (req, res) => {
   try {
     const { name, pincode } = req.query;
 
+    
     if (!name || !pincode) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Both name and pincode are required" 
-      });
+      throw new Error("Both name and pincode are required")
+      // return res.status(400).json({ 
+      //   success: false, 
+      //   message: "Both name and pincode are required" 
+      // });
     }
 
     const searchTerm = `%${name}%`;

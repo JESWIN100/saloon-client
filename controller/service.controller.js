@@ -24,7 +24,13 @@ const getservices = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+     await logErrorToServer(
+      "Service Module",
+      "service Controller",
+      "Error fetching getservices",
+      error.message
+    );
+   
   }
 }
 
@@ -59,6 +65,12 @@ const getServicesByGender = async (req, res) => {
     });
 
   } catch (error) {
+       await logErrorToServer(
+      "Service Module",
+      "service Controller",
+      "Error fetching getServicesByGender",
+      error.message
+    );
     console.error("Catch Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
