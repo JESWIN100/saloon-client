@@ -3,6 +3,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto"); // Add this at the top
 const {sendConfirmation, sendCancellationEmail} = require('../utils/sendEmail');
 const { logErrorToServer } = require('../utils/errorLogger');
+const { sendNotification } = require('../config/notfication');
 const createBooking = async (req, res) => {
   const {id}=req.params;
   try {
@@ -18,12 +19,11 @@ const createBooking = async (req, res) => {
       date,
       customer_phone,
       customer_email,
+      
       totalPrice
     } = req.body;
     
 
-   
-    
     const customer_id = id
     const payment_status = payment_method === 'pay_now' ? 'paid' : 'pending';
     const booking_status = 'pending';
@@ -38,8 +38,8 @@ const createBooking = async (req, res) => {
 
     const insertMasterSql = `
       INSERT INTO booking_master 
-      (customer_id, salon_id,	booking_date, status, payment_status, total_amount)
-      VALUES (?,?, ?, ?, ?, ?)
+      (customer_id, salon_id,	booking_date, status, payment_status, total_amount,payment_method)
+      VALUES (?,?, ?, ?, ?, ?, ?)
     `;
 
     const masterResult = await query(insertMasterSql, [
@@ -48,7 +48,8 @@ const createBooking = async (req, res) => {
       date,
       booking_status,
       payment_status,
-      totalPrice
+      totalPrice,
+      payment_method
     ]);
 
     const bookingId = masterResult.insertId;
@@ -91,6 +92,18 @@ const createBooking = async (req, res) => {
       .catch((err) => console.error('Email error:', err));
 
     // 5️⃣ WhatsApp message
+
+    const to = salonId; // salon receives notification
+    const type = "Booking Scuccess";
+    const  message= `Congrats ${customer_name}! 
+Your slot has been booked successfully.
+Please wait while ${salonName} confirms your booking.
+You’ll get a notification once it’s confirmed.`;
+    const related_id = bookingId;
+    
+
+    await sendNotification(to, customer_id, type, message, related_id);
+
 
     // 6️⃣ Respond
     res.json({
@@ -160,18 +173,19 @@ const razopay_success = async (req, res) => {
       customer_phone,
       customer_email,
       orderId,
+      payment_method,
       paymentId,
       signature,
       totalPrice,
       date
     } = req.body;
 
-  
+
     
 
     const customer_id = id;
     const booking_status = "pending";
-    const payment_method = "pay_now";
+    // const payment_method = "pay_now";
     let payment_status = "pending";
 
     if (orderId) payment_status = "paid";
@@ -204,8 +218,8 @@ const razopay_success = async (req, res) => {
     // 1️⃣ Insert into booking_master
     const insertMasterSql = `
       INSERT INTO booking_master 
-      (customer_id, salon_id, booking_date, status, payment_status, total_amount)
-      VALUES (?, ?, ?, ?, ?, ?)
+      (customer_id, salon_id, booking_date, status, payment_status, total_amount,payment_method)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     const masterResult = await query(insertMasterSql, [
       customer_id,
@@ -214,6 +228,7 @@ const razopay_success = async (req, res) => {
       booking_status,
       payment_status,
       totalPrice,
+      payment_method
     ]);
 
     const bookingId = masterResult.insertId;
@@ -258,6 +273,17 @@ const razopay_success = async (req, res) => {
       start_time,
       end_time
     ).catch((err) => console.log("Email sending failed:", err));
+
+
+    const to = salonId; // salon receives notification
+    const type = "Booking Scuccess";
+    const  message= `Congrats ${customer_name}! 
+Your slot has been booked successfully.
+Please wait while ${salonName} confirms your booking.
+You’ll get a notification once it’s confirmed.`;
+    const related_id = bookingId;
+
+    await sendNotification(to, customer_id, type, message, related_id);
 
     // 5️⃣ Return response
     res.json({

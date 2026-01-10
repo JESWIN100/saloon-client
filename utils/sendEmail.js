@@ -4,7 +4,7 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "morent369@gmail.com",  // your Gmail ID
-    pass: "qtrtyqggedwztkkb", // 16 digit App Password
+    pass: "ytnbjftcckidslyu", // 16 digit App Password
   },
 });
 
@@ -25,10 +25,10 @@ const sendMail = async (to, subject, text, html) => {
 };
 
 const sendConfirmation = async (customerName, customerEmail, salonName,date, serviceName, startTime, endTime) => {
-  return sendMail(
+   return sendMail(
     customerEmail,
-    `Booking Confirmed - ${salonName}`,
-    `Hi ${customerName}, your booking at ${salonName} for ${serviceName} is confirmed.`,
+    `Booking Request Received – Waiting for ${salonName} Confirmation`,
+    `Hi ${customerName}, your booking request at ${salonName} is under review.`,
     `
     <div style="font-family: Arial, sans-serif; max-width: 650px; margin: auto; background: #f4f4f4; padding: 20px;">
       
@@ -36,35 +36,40 @@ const sendConfirmation = async (customerName, customerEmail, salonName,date, ser
       <div style="background: #ffffff; border-radius: 10px; border: 1px solid #e0e0e0; overflow: hidden;">
 
         <!-- Header -->
-        <div style="background: #1e47e9ff; padding: 25px; text-align: center; color: white;">
-          <h2 style="margin: 0; font-size: 26px;">Booking Confirmed</h2>
-          <p style="margin: 5px 0 0 0; font-size: 16px; opacity: 0.9;">${salonName}</p>
+        <div style="background: #f59e0b; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0; font-size: 26px;">Booking Pending</h2>
+          <p style="margin: 5px 0 0 0; font-size: 16px; opacity: 0.9;">
+            Waiting for salon confirmation
+          </p>
         </div>
 
         <!-- Body -->
         <div style="padding: 25px;">
 
-          <p style="font-size: 16px;">Hi <strong>${customerName}</strong>,</p>
-
-          <p style="font-size: 16px; line-height: 1.6;">
-            Your appointment has been successfully confirmed.  
-            Below are your booking details:
+          <p style="font-size: 16px;">
+            Hi <strong>${customerName}</strong>,
           </p>
 
-          <!-- Booking Details Card -->
+          <p style="font-size: 16px; line-height: 1.6;">
+            Thank you for booking with <strong>${salonName}</strong> 🎉  
+            Your appointment request has been successfully sent and is currently 
+            <strong>waiting for approval from the salon owner</strong>.
+          </p>
+
+          <!-- Booking Details -->
           <div style="background: #fafafa; padding: 18px; border-radius: 8px; border: 1px solid #eee; margin: 20px 0;">
-            <p style="margin: 6px 0; font-size: 16px;"><strong>Service:</strong> ${date}</p>
-            <p style="margin: 6px 0; font-size: 16px;"><strong>Date:</strong> ${serviceName}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Service:</strong> ${serviceName}</p>
+            <p style="margin: 6px 0; font-size: 16px;"><strong>Date:</strong> ${date}</p>
             <p style="margin: 6px 0; font-size: 16px;"><strong>Time:</strong> ${startTime} – ${endTime}</p>
           </div>
 
-          <!-- Footer -->
           <p style="font-size: 16px; line-height: 1.6;">
-            We look forward to serving you. If you have any questions, feel free to contact us anytime.
+            Once the salon confirms your booking, you’ll receive another email instantly.  
+            Please sit back and relax — happy styling ahead ✨
           </p>
 
           <p style="font-size: 18px; text-align: center; margin-top: 30px; font-weight: bold;">
-             Go 2 Salon Team
+            Go 2 Salon Team 
           </p>
 
         </div>
