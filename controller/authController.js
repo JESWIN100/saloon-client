@@ -18,7 +18,9 @@ function generateOTP() {
 
 // Email transporter (use Gmail app password for security)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com", // Explicit host is better for Render
+  port: 465,              // Secure port
+  secure: true,
   auth: {
     user: "morent369@gmail.com",  // your Gmail ID
     pass: "ytnbjftcckidslyu", // 16 digit App Password
