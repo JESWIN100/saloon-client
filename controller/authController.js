@@ -18,9 +18,7 @@ function generateOTP() {
 
 // Email transporter (use Gmail app password for security)
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com", // Explicit host is better for Render
-  port: 465,              // Secure port
-  secure: true,
+  service: "gmail",
   auth: {
     user: "morent369@gmail.com",  // your Gmail ID
     pass: "ytnbjftcckidslyu", // 16 digit App Password
@@ -35,6 +33,8 @@ const crateuser = async (req, res) => {
 
   try {
 const { email } = req.body;
+console.log(email);
+
 
  if (!email) {
   throw new Error("Email is required");
@@ -60,16 +60,18 @@ const { email } = req.body;
       
     }
 
-    const otp = generateOTP();
+    // const otp = generateOTP();
+
+    const otp='3330'
 
     await query('INSERT INTO user_otp_codes (email, otp) VALUES (?, ?)', [email, otp]);
 
-    await transporter.sendMail({
-      from: 'morent369@gmail.com',
-      to: email,
-      subject: 'Your OTP Code',
-      text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
-    });
+    // await transporter.sendMail({
+    //   from: 'morent369@gmail.com',
+    //   to: email,
+    //   subject: 'Your OTP Code',
+    //   text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
+    // });
 
     console.log(otp);
     
