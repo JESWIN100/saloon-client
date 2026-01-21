@@ -23,10 +23,12 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // must be false for 587
   auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_KEY,
+     user: process.env.BREVO_SMTP_USER,
+  pass: process.env.BREVO_SMTP_KEY,
   },
 });
+console.log("SMTP USER:", process.env.BREVO_SMTP_USER);
+console.log("SMTP KEY:", process.env.BREVO_SMTP_KEY ? "SET" : "NOT SET");
 
 // 📨 Send OTP
 const crateuser = async (req, res) => {
@@ -274,7 +276,6 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { updateUserProfile };
 
 
 
