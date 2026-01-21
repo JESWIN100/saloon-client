@@ -17,11 +17,14 @@ function generateOTP() {
 }
 
 // Email transporter (use Gmail app password for security)
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false, // must be false for 587
   auth: {
-    user: "morent369@gmail.com",  // your Gmail ID
-    pass: "ytnbjftcckidslyu", // 16 digit App Password
+    user: process.env.BREVO_SMTP_USER,
+    pass: process.env.BREVO_SMTP_KEY,
   },
 });
 
@@ -60,18 +63,18 @@ console.log(email);
       
     }
 
-    // const otp = generateOTP();
+    const otp = generateOTP();
 
-    const otp='3330'
+    // const otp='3330'
 
     await query('INSERT INTO user_otp_codes (email, otp) VALUES (?, ?)', [email, otp]);
 
-    // await transporter.sendMail({
-    //   from: 'morent369@gmail.com',
-    //   to: email,
-    //   subject: 'Your OTP Code',
-    //   text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
-    // });
+    await transporter.sendMail({
+      from: 'morent369@gmail.com',
+      to: email,
+      subject: 'Your OTP Code',
+      text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
+    });
 
     console.log(otp);
     
