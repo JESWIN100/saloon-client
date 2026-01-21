@@ -18,17 +18,17 @@ function generateOTP() {
 
 // Email transporter (use Gmail app password for security)
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false, // must be false for 587
-  auth: {
-     user: process.env.BREVO_SMTP_USER,
-  pass: process.env.BREVO_SMTP_KEY,
-  },
-});
-console.log("SMTP USER:", process.env.BREVO_SMTP_USER);
-console.log("SMTP KEY:", process.env.BREVO_SMTP_KEY ? "SET" : "NOT SET");
+// const transporter = nodemailer.createTransport({
+//   host: "smtp-relay.brevo.com",
+//   port: 587,
+//   secure: false, // must be false for 587
+//   auth: {
+//      user: process.env.BREVO_SMTP_USER,
+//   pass: process.env.BREVO_SMTP_KEY,
+//   },
+// });
+// console.log("SMTP USER:", process.env.BREVO_SMTP_USER);
+// console.log("SMTP KEY:", process.env.BREVO_SMTP_KEY ? "SET" : "NOT SET");
 
 // 📨 Send OTP
 const crateuser = async (req, res) => {
@@ -65,18 +65,18 @@ console.log(email);
       
     }
 
-    const otp = generateOTP();
+    // const otp = generateOTP();
 
-    // const otp='3330'
+    const otp='0000'
 
     await query('INSERT INTO user_otp_codes (email, otp) VALUES (?, ?)', [email, otp]);
 
-    await transporter.sendMail({
-      from: 'morent369@gmail.com',
-      to: email,
-      subject: 'Your OTP Code',
-      text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
-    });
+    // await transporter.sendMail({
+    //   from: 'morent369@gmail.com',
+    //   to: email,
+    //   subject: 'Your OTP Code',
+    //   text: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
+    // });
 
     console.log(otp);
     
